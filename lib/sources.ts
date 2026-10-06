@@ -92,6 +92,70 @@ export async function scrapeFile(value: string): Promise<ScrapedImage> {
   return {image,mime,sourceUrl,sourceImageUrl,attribution:clean(license.credit || author),license:clean(license.short),licenseUrl};
 }
 export async function discoverImage(name: string): Promise<ScrapedImage> {
+  const rapidApiKey = process.env.RAPIDAPI_KEY;
+  const rapidApiHost = process.env.RAPIDAPI_HOST || "mobile-phone-specs-database.p.rapidapi.com";
+  
+  if (rapidApiKey) {
+    try {
+      const brand = name.split(" ")[0];
+      const modelQuery = name.split(" ").slice(1).join(" ");
+
+      const modelsRes = await fetch(`https://${rapidApiHost}/gsm/get-models-by-brandname/${encodeURIComponent(brand)}`, {
+        headers: { 'X-RapidAPI-Key': rapidApiKey, 'X-RapidAPI-Host': rapidApiHost }
+      });
+
+      if (modelsRes.ok) {
+        const models = await modelsRes.json() as any[];
+        // Find best match allowing for fuzzy matching (like "5G" suffixes)
+        const match = models.find(m => candidateMatches(m.modelValue, modelQuery) || candidateMatches(m.modelValue, name));
+        
+        if (match) {
+          const specsRes = await fetch(`https://${rapidApiHost}/gsm/get-specifications-by-brandname-modelname/${encodeURIComponent(brand)}/${encodeURIComponent(match.modelValue)}`, {
+            headers: { 'X-RapidAPI-Key': rapidApiKey, 'X-RapidAPI-Host': rapidApiHost }
+          });
+          
+          if (specsRes.ok) {
+            const specs = await specsRes.json() as any;
+            const customId = specs?.phoneDetails?.customId;
+            
+            if (customId) {
+              const imagesRes = await fetch(`https://${rapidApiHost}/gsm/get-phone-images-links-by-phone-custom-id/${customId}`, {
+                headers: { 'X-RapidAPI-Key': rapidApiKey, 'X-RapidAPI-Host': rapidApiHost }
+              });
+              
+              if (imagesRes.ok) {
+                const images = await imagesRes.json() as any[];
+                const imageUrl = images?.[0]?.link;
+                
+                if (imageUrl) {
+                  const imgResponse = await fetch(imageUrl);
+                  if (imgResponse.ok) {
+                    const image = await readBounded(imgResponse, 500_000);
+                    const mime = imageMime(image);
+                    if (mime) {
+                      return {
+                        image,
+                        mime,
+                        sourceUrl: `https://www.gsmarena.com/res.php3?sSearch=${encodeURIComponent(match.modelValue)}`,
+                        sourceImageUrl: imageUrl,
+                        attribution: "GSMArena (via RapidAPI)",
+                        license: "Copyrighted/Fair Use",
+                        licenseUrl: "https://www.gsmarena.com"
+                      };
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("RapidAPI fetch failed, falling back to Wikimedia:", error);
+    }
+  }
+
+  // Fallback to Wikimedia Commons
   const title=name.replace(/^apple /i,"");
   const category=`${COMMONS}/wiki/Category:${encodeURIComponent(title.replaceAll(" ","_"))}`;
   const page=await html(category);
