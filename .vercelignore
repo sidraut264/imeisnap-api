@@ -1,0 +1,9 @@
+.git
+.env*
+ADMIN-CREDENTIALS.txt
+.dev.vars
+local.db*
+.sites-runtime
+.wrangler
+.openai
+node_modules
