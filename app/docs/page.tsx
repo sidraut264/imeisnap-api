@@ -1,5 +1,5 @@
 import React from 'react';
-import { Terminal, Key, Shield, Smartphone, Box, Webhook } from 'lucide-react';
+import { Terminal, Key, Shield, Smartphone, Box, Webhook, HelpCircle } from 'lucide-react';
 
 export default function DocsPage() {
   return (
@@ -204,6 +204,50 @@ export default function DocsPage() {
                   <span>Missing or invalid tokens will return a <code className="text-white text-sm">401 Unauthorized</code> error. Keep your keys secret.</span>
                 </li>
               </ul>
+            </div>
+          </section>
+          {/* FAQs */}
+          <section className="pt-8 border-t border-neutral-800/50">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center border border-pink-500/20">
+                <HelpCircle className="w-6 h-6 text-pink-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Frequently Asked Questions</h2>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* FAQ 1 */}
+              <div className="bg-[#0c0c0c] p-6 rounded-2xl border border-neutral-800">
+                <h3 className="text-lg font-semibold text-white mb-3">How is the end-user supposed to use the image?</h3>
+                <p className="text-neutral-400 leading-relaxed mb-4">
+                  Because the <code className="text-emerald-400 font-mono text-sm">image_url</code> returned in the JSON requires the <code className="text-orange-400 font-mono text-sm">Authorization: Bearer</code> header, it cannot be placed directly into a standard HTML <code className="text-white text-sm">&lt;img src="..." /&gt;</code> tag.
+                </p>
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-neutral-900 border border-neutral-800">
+                    <h4 className="text-white font-medium mb-2">Option A: Backend Proxy (Recommended)</h4>
+                    <p className="text-neutral-400 text-sm">Your backend server should fetch the <code className="text-white text-sm">image_url</code> using your API key, and then either serve it directly to your frontend or store it in your own bucket (like AWS S3) for caching.</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-neutral-900 border border-neutral-800">
+                    <h4 className="text-white font-medium mb-2">Option B: Direct Bytes Download</h4>
+                    <p className="text-neutral-400 text-sm">If you do not need the JSON metadata at all, you can instantly download the raw image bytes (e.g. <code className="text-white text-sm">image/jpeg</code>) by appending <code className="text-emerald-400 font-mono text-xs">&format=image</code> to your original request.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* FAQ 2 */}
+              <div className="bg-[#0c0c0c] p-6 rounded-2xl border border-neutral-800">
+                <h3 className="text-lg font-semibold text-white mb-3">Why are we exposing our source and licensing?</h3>
+                <p className="text-neutral-400 leading-relaxed">
+                  The API dynamically aggregates device images from open-source repositories (such as <strong>Wikimedia Commons</strong>). 
+                  These images are often licensed under <strong>Creative Commons (e.g. CC BY-SA 4.0)</strong>, which carries a strict legal requirement: 
+                  anyone displaying the image must give appropriate credit (Attribution) and provide a link to the license.
+                </p>
+                <p className="text-neutral-400 leading-relaxed mt-4">
+                  By returning <code className="text-white text-sm">attribution</code>, <code className="text-white text-sm">license</code>, and <code className="text-white text-sm">source_url</code> in the API response, we are providing you with the necessary legal metadata to comply with copyright laws when you display these images in your own applications.
+                </p>
+              </div>
             </div>
           </section>
 
